@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "minitalk.h"
+#include <stdio.h>
 
 static t_stamp	g_stamp;
 
@@ -18,10 +19,12 @@ void	clib_handler(int sig)
 {
 	static int	bits = 7;
 	static int	index = 0;
+	static int	count;
 
 	if (sig == SIGUSR2)
 	{
-		ft_printf("Message sent successfully.");
+		ft_printf("\rACK received: %d", count);
+		ft_printf("\nMessage sent successfully.");
 		exit(0);
 	}
 	else
@@ -36,7 +39,9 @@ void	clib_handler(int sig)
 			bits = 7;
 			++index;
 		}
+		++count;
 	}
+	ft_printf("\rACK received: %d", count);
 }
 
 int	ft_atoi(const char *str)
@@ -73,6 +78,11 @@ int	main(int ac, char **av)
 	signal(SIGUSR1, clib_handler);
 	signal(SIGUSR2, clib_handler);
 	g_stamp.pid = ft_atoi(av[1]);
+	if (g_stamp.pid < 100 || g_stamp.pid > 100000)
+	{
+		ft_printf("Wrong PID value received.\n");
+		exit(EXIT_FAILURE);
+	}
 	g_stamp.str = av[2];
 	kill(g_stamp.pid, SIGUSR1);
 	while (1)

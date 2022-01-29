@@ -23,7 +23,7 @@ void	send_bytes(pid_t spid, char letter)
 			kill(spid, SIGUSR1);
 		else
 			kill(spid, SIGUSR2);
-		usleep(20);
+		usleep(40);
 	}
 }
 

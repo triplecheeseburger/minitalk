@@ -14,22 +14,22 @@
 
 void	srvb_handler(int sig, siginfo_t *siginfo, void *context)
 {
-	static char	byte = -1;
-	static char	bits;
+	static char		byte = -1;
+	static char		bits;
+	static pid_t	cpid;
 
+	(void)context;
 	if (byte == -1)
+	{
+		cpid = siginfo->si_pid;
 		return ((void)(byte++ && kill(siginfo->si_pid, SIGUSR1)));
-	byte *= 2;
-	if (sig == SIGUSR1)
-		byte += 1;
-	bits += 1;
+	}
+	byte = byte << 1 | (sig == SIGUSR1);
+	++bits;
 	if (bits == 8)
 	{
-		if (byte == 0 && write(1, "\n", 1))
-		{
-			kill(siginfo->si_pid, SIGUSR2);
-			--byte;
-		}
+		if (byte == 0 && write(1, "\n", 1) && --byte)
+			kill(cpid, SIGUSR2);
 		else
 		{
 			write(1, &byte, 1);
@@ -37,8 +37,7 @@ void	srvb_handler(int sig, siginfo_t *siginfo, void *context)
 		}
 		bits = 0;
 	}
-	kill(siginfo->si_pid, SIGUSR1);
-	(void)context;
+	kill(cpid, SIGUSR1);
 }
 
 int	main(void)
@@ -48,9 +47,8 @@ int	main(void)
 	ft_printf("pid: %d\n", getpid());
 	sigact.sa_sigaction = srvb_handler;
 	sigact.sa_flags = SA_SIGINFO;
-	if (sigaction(SIGUSR1, &sigact, 0) == -1
-		|| sigaction(SIGUSR2, &sigact, 0) == -1)
-		exit(EXIT_FAILURE);
+	sigaction(SIGUSR1, &sigact, 0);
+	sigaction(SIGUSR2, &sigact, 0);
 	while (1)
 		pause();
 	return (0);
